@@ -1,6 +1,8 @@
 services:
-  pipeline:
+  triaxa:
     build: .
+    image: triaxa:latest
+    container_name: triaxa
     ports:
       - "8000:8000"
     env_file:
@@ -12,8 +14,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - pipeline-data:/data
+      - triaxa-data:/data
     restart: unless-stopped
 
 volumes:
-  pipeline-data:
+  triaxa-data:

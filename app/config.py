@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     max_text_length: int = Field(default=20_000, ge=1)
 
     # --- Storage / server --------------------------------------------------
-    database_path: str = "data/pipeline.db"
+    database_path: str = "data/triaxa.db"
     api_key: Optional[str] = Field(
         default=None, description="If set, requests must send it in the X-API-Key header."
     )

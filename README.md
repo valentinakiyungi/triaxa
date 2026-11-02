@@ -1,4 +1,6 @@
-# ⚡ Async Agent Pipeline
+# ⚡ Triaxa
+
+> **Triaxa** — AI ticket triage. *Sort every support message by category, urgency and next step, automatically.*
 
 [![CI](https://github.com/valentinakiyungi/async-agent-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/valentinakiyungi/async-agent-pipeline/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
@@ -144,7 +146,7 @@ All settings are environment variables (or lines in `.env`). See [`.env.example`
 | `RETRY_BACKOFF_SECONDS` | `2` | Base delay, doubled after each failed attempt |
 | `MAX_BATCH_SIZE` | `100` | Max items per `/jobs/batch` request |
 | `MAX_TEXT_LENGTH` | `20000` | Max characters per text |
-| `DATABASE_PATH` | `data/pipeline.db` | SQLite file |
+| `DATABASE_PATH` | `data/triaxa.db` | SQLite file |
 | `API_KEY` | *(unset)* | If set, every API call needs `X-API-Key` |
 | `CORS_ORIGINS` | `*` | Comma-separated allowed origins |
 | `LOG_LEVEL` | `INFO` | Logging level |
@@ -161,7 +163,7 @@ docker compose up --build
 ```
 
 The container reaches LM Studio/Ollama on your host via `host.docker.internal`; job history is kept in
-the `pipeline-data` volume.
+the `triaxa-data` volume.
 
 ---
 

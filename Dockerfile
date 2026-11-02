@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DATABASE_PATH=/data/pipeline.db
+    DATABASE_PATH=/data/triaxa.db
 
 WORKDIR /srv
 COPY requirements.txt .

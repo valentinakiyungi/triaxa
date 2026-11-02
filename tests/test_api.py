@@ -36,7 +36,7 @@ def test_health_and_ready(client):
 def test_dashboard_served(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert "Agent Pipeline" in r.text
+    assert "Triaxa" in r.text
 
 
 def test_analyze_sync(client):

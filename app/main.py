@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 
-from . import __version__
+from . import __title__, __version__
 from .config import Settings, get_settings
 from .llm import Analyzer, LLMError, build_analyzer
 from .pipeline import Pipeline
@@ -46,7 +46,7 @@ def create_app(settings: Optional[Settings] = None, analyzer: Optional[Analyzer]
             await store.close()
 
     app = FastAPI(
-        title="Async Agent Pipeline",
+        title="Triaxa",
         description="Structured triage of support tickets with local or hosted LLMs. "
         "Synchronous `/analyze` for one-off calls; `/jobs` for queued, persisted, retried processing.",
         version=__version__,
@@ -85,7 +85,7 @@ def create_app(settings: Optional[Settings] = None, analyzer: Optional[Analyzer]
     @app.get("/health", tags=["system"])
     async def health():
         """Liveness: the API process is up."""
-        return {"status": "healthy", "service": "async-agent-pipeline", "version": __version__}
+        return {"status": "healthy", "service": __title__, "version": __version__}
 
     @app.get("/health/ready", tags=["system"])
     async def ready(request: Request):

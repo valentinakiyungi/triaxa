@@ -1,4 +1,4 @@
-"""Command-line client for the Async Agent Pipeline.
+"""Command-line client for Triaxa.
 
 Examples:
     python test_client.py                              # run the built-in sample tickets through the queue
@@ -99,8 +99,8 @@ def print_job(job: Dict[str, Any]) -> None:
 
 def main(argv: Optional[List[str]] = None) -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--url", default=os.getenv("PIPELINE_URL", "http://127.0.0.1:8000"))
-    p.add_argument("--api-key", default=os.getenv("PIPELINE_API_KEY"))
+    p.add_argument("--url", default=os.getenv("TRIAXA_URL", "http://127.0.0.1:8000"))
+    p.add_argument("--api-key", default=os.getenv("TRIAXA_API_KEY"))
     sub = p.add_subparsers(dest="cmd")
     sub.add_parser("health")
     sub.add_parser("demo", help="queue the sample tickets and wait (default)")
@@ -153,7 +153,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             ok = sum(1 for j in results if j["status"] == "completed")
             print(f"\nDone: {ok}/{len(SAMPLES)} completed.")
     except requests.ConnectionError:
-        raise SystemExit(f"Cannot connect to the pipeline at {args.url}. Is the server running?")
+        raise SystemExit(f"Cannot connect to Triaxa at {args.url}. Is the server running?")
 
 
 if __name__ == "__main__":
