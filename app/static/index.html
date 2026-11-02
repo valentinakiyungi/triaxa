@@ -5,30 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Triaxa</title>
 <meta name="description" content="Triaxa sorts support tickets by category, urgency and next step using an LLM.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F3A5F'/%3E%3Cpath d='M9 10h14M9 16h10M9 22h6' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235B2A7A'/%3E%3Cpath d='M9 10h14M9 16h10M9 22h6' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #E7ECF0; --surface: #F6F8FA; --raised: #FFFFFF; --ink: #16202A; --muted: #586674;
-  --line: #CFD7DF; --brand: #1F3A5F; --brand-ink: #FFFFFF; --focus: #2C74AE;
+  --bg: #ECEAF0; --surface: #F7F6F9; --raised: #FFFFFF; --ink: #1E1A26; --muted: #625C6E;
+  --line: #D9D5E0; --brand: #5B2A7A; --brand-ink: #FFFFFF; --focus: #7A3FA0;
   --urgent: #C42F3A; --high: #A86F00; --medium: #2C74AE; --low: #3D7C50; --incoming: #66727F;
-  --shadow: 0 1px 2px rgba(22, 32, 42, .08), 0 4px 14px rgba(22, 32, 42, .06);
+  --shadow: 0 1px 2px rgba(30, 26, 38, .08), 0 4px 14px rgba(30, 26, 38, .06);
   --font: "Archivo", ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0D131A; --surface: #131B24; --raised: #19232E; --ink: #E3E8ED; --muted: #94A1AE;
-    --line: #26323F; --brand: #8DB4E2; --brand-ink: #0D131A; --focus: #8DB4E2;
+    --bg: #121017; --surface: #18151F; --raised: #201C29; --ink: #EAE6EF; --muted: #A39CAF;
+    --line: #2F2A3A; --brand: #CDA6EC; --brand-ink: #1E1229; --focus: #CDA6EC;
     --urgent: #F06B73; --high: #E2AA3B; --medium: #6CA9E0; --low: #7CC08F; --incoming: #94A1AE;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0D131A; --surface: #131B24; --raised: #19232E; --ink: #E3E8ED; --muted: #94A1AE;
-  --line: #26323F; --brand: #8DB4E2; --brand-ink: #0D131A; --focus: #8DB4E2;
+  --bg: #121017; --surface: #18151F; --raised: #201C29; --ink: #EAE6EF; --muted: #A39CAF;
+  --line: #2F2A3A; --brand: #CDA6EC; --brand-ink: #1E1229; --focus: #CDA6EC;
   --urgent: #F06B73; --high: #E2AA3B; --medium: #6CA9E0; --low: #7CC08F; --incoming: #94A1AE;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4); color-scheme: dark;
 }
@@ -54,7 +54,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .conn span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .conn .led { width: 9px; height: 9px; border-radius: 50%; background: var(--incoming); flex: none; }
 .conn[data-state="ok"] .led { background: var(--low); }
-.conn[data-state="demo"] .led { background: var(--medium); }
+.conn[data-state="demo"] .led { background: var(--brand); }
 .conn[data-state="bad"] .led { background: var(--urgent); }
 .icon-btn { border: 1px solid var(--line); background: var(--raised); border-radius: 999px; width: 36px; height: 36px;
   display: grid; place-items: center; cursor: pointer; flex: none; }
@@ -168,7 +168,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tag .note { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
 
 /* ---------- drawer ---------- */
-.scrim { position: fixed; inset: 0; background: rgba(13, 19, 26, .38); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
+.scrim { position: fixed; inset: 0; background: rgba(18, 16, 23, .38); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
 .scrim.open { opacity: 1; pointer-events: auto; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); background: var(--surface);
   border-left: 1px solid var(--line); z-index: 31; transform: translateX(100%); transition: transform .22s ease-out;
@@ -188,7 +188,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- settings dialog ---------- */
 dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 0; width: min(520px, calc(100vw - 32px)); }
-dialog::backdrop { background: rgba(13, 19, 26, .45); }
+dialog::backdrop { background: rgba(18, 16, 23, .45); }
 dialog form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 dialog h2 { margin: 0; font-size: 20px; font-variation-settings: "wdth" 115; }
 dialog p { margin: 0; color: var(--muted); font-size: 14px; }

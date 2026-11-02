@@ -2,12 +2,12 @@
 
 > **Triaxa** — AI ticket triage. *Sort every support message by category, urgency and next step, automatically.*
 
-[![CI](https://github.com/valentinakiyungi/async-agent-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/valentinakiyungi/async-agent-pipeline/actions/workflows/ci.yml)
+[![CI](https://github.com/valentinakiyungi/triaxa/actions/workflows/ci.yml/badge.svg)](https://github.com/valentinakiyungi/triaxa/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Live demo:** https://valentinakiyungi.github.io/async-agent-pipeline/
+**Live demo:** https://valentinakiyungi.github.io/triaxa/
 
 An asynchronous ticket-triage service. Send it free-text support messages; it uses an LLM to return a
 validated, structured record — **category, urgency, sentiment, summary and next action** — either
@@ -37,8 +37,8 @@ models (LM Studio, Ollama, vLLM, llama.cpp) or any OpenAI-compatible API, and sh
 ### 1. Install
 
 ```bash
-git clone https://github.com/valentinakiyungi/async-agent-pipeline.git
-cd async-agent-pipeline
+git clone https://github.com/valentinakiyungi/triaxa.git
+cd triaxa
 python3 -m venv venv
 source venv/bin/activate            # Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -165,7 +165,7 @@ The dashboard in `app/static/` is published by `.github/workflows/pages.yml` whe
 
 **One-time setup:** on GitHub open **Settings → Pages**, and under *Build and deployment → Source* choose
 **GitHub Actions**. The next push (or *Actions → Deploy dashboard to GitHub Pages → Run workflow*) publishes
-it at `https://valentinakiyungi.github.io/async-agent-pipeline/`.
+it at `https://valentinakiyungi.github.io/triaxa/`.
 
 GitHub Pages only serves static files, so it can't run the Python server or a model. The hosted page has two modes,
 switched from the status pill in the top bar:
