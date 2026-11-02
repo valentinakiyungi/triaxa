@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Pipeline</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22 fill=%22%232f5d50%22/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --ink: #1c1b19; --muted: #6b6860; --line: #e4e1d8;
+  --accent: #2f5d50; --accent-ink: #ffffff; --soft: #eef2ef;
+  --low: #5b7c6b; --medium: #a07a1f; --high: #b65a2a; --urgent: #b0283a;
+  --ok: #2e7d4f; --bad: #b0283a; --warn: #a07a1f;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141513; --panel: #1c1d1a; --ink: #ecebe6; --muted: #9a978d; --line: #2e2f2a;
+    --accent: #7fb8a4; --accent-ink: #10201b; --soft: #20261f;
+    --low: #8fb3a0; --medium: #d8b45a; --high: #e08a5c; --urgent: #ef6b7c;
+    --ok: #6cc28f; --bad: #ef6b7c; --warn: #d8b45a;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); }
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+h1 { font-size: 17px; margin: 0; letter-spacing: -0.01em; }
+h1 small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+.status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); }
+main { max-width: 1180px; margin: 0 auto; padding: 24px; display: grid; gap: 20px;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr); }
+@media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+  margin: 0 0 12px; font-weight: 600; }
+textarea, input, select { width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+textarea { min-height: 150px; resize: vertical; }
+textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:disabled { opacity: .55; cursor: progress; }
+button.link { border: 0; background: none; padding: 2px 6px; color: var(--accent); font-weight: 500; }
+.hint { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.tabs button { flex: 1; padding: 7px; font-weight: 500; }
+.tabs button.on { background: var(--soft); border-color: var(--accent); }
+.result { margin-top: 14px; display: none; }
+.result.show { display: block; }
+.kv { display: grid; grid-template-columns: 96px 1fr; gap: 6px 10px; font-size: 14px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; }
+.err { color: var(--bad); font-size: 13.5px; margin-top: 10px; white-space: pre-wrap; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 560px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.tile b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.tile span { color: var(--muted); font-size: 12px; }
+.filters { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.filters select { width: auto; padding: 6px 10px; font-size: 13.5px; }
+.jobs { width: 100%; border-collapse: collapse; font-size: 14px; }
+.jobs th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 6px 8px;
+  border-bottom: 1px solid var(--line); }
+.jobs td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.jobs tr.main { cursor: pointer; } .jobs tr.main:hover td { background: var(--soft); }
+.jobs .text { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jobs .detail td { background: var(--soft); }
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px;
+  border: 1px solid currentColor; white-space: nowrap; }
+.u-Low { color: var(--low); } .u-Medium { color: var(--medium); } .u-High { color: var(--high); }
+.u-Urgent { color: var(--urgent); }
+.s-queued, .s-processing { color: var(--warn); } .s-completed { color: var(--ok); } .s-failed { color: var(--bad); }
+.time { color: var(--muted); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); text-align: center; padding: 28px; }
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 10px;
+  color: var(--muted); font-size: 13px; }
+pre { font-family: var(--mono); font-size: 12.5px; white-space: pre-wrap; margin: 6px 0 0; }
+#keybox { display: none; margin-top: 12px; }
+.table-wrap { overflow-x: auto; }
+@media (max-width: 560px) { .jobs .hide-sm { display: none; } .jobs .text { max-width: 140px; } .jobs td, .jobs th { padding-left: 5px; padding-right: 5px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Agent Pipeline <small id="version"></small></h1>
+  <div class="status"><span class="dot" id="dot"></span><span id="health">Checking model…</span></div>
+</header>
+
+<main>
+  <section>
+    <div class="panel">
+      <h2>Analyze</h2>
+      <div class="tabs">
+        <button id="tab-single" class="on" type="button">Single ticket</button>
+        <button id="tab-batch" type="button">Batch</button>
+      </div>
+      <form id="form">
+        <textarea id="text" placeholder="Paste a support ticket, email or message…" required></textarea>
+        <div class="hint" id="mode-hint">Queue runs in the background and keeps a history. Instant waits for the answer.</div>
+        <div class="row">
+          <button class="primary" type="submit" id="queue-btn">Queue job</button>
+          <button type="button" id="instant-btn">Analyze instantly</button>
+        </div>
+        <div id="keybox">
+          <input id="apikey" type="password" placeholder="API key (X-API-Key)" autocomplete="off">
+        </div>
+      </form>
+      <div class="err" id="form-err"></div>
+      <div class="result" id="result">
+        <h2 style="margin-top:6px">Result</h2>
+        <dl class="kv" id="result-kv"></dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Pipeline</h2>
+    <div class="stats">
+      <div class="tile"><b id="st-total">–</b><span>Total jobs</span></div>
+      <div class="tile"><b id="st-queue">–</b><span>In queue</span></div>
+      <div class="tile"><b id="st-failed">–</b><span>Failed</span></div>
+      <div class="tile"><b id="st-avg">–</b><span>Avg time</span></div>
+    </div>
+    <div class="filters">
+      <select id="f-status"><option value="">All statuses</option>
+        <option>queued</option><option>processing</option><option>completed</option><option>failed</option></select>
+      <select id="f-category"><option value="">All categories</option>
+        <option>Billing</option><option>Technical</option><option>Account</option>
+        <option>Sales</option><option>Feedback</option><option>General</option></select>
+      <select id="f-urgency"><option value="">All urgencies</option>
+        <option>Urgent</option><option>High</option><option>Medium</option><option>Low</option></select>
+    </div>
+    <div class="table-wrap">
+      <table class="jobs">
+        <thead><tr><th>Ticket</th><th>Category</th><th>Urgency</th><th>Status</th><th class="hide-sm">Created</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span id="page-info"></span>
+      <span><button class="link" id="prev" type="button">‹ Newer</button><button class="link" id="next" type="button">Older ›</button></span>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PAGE = 25;
+let offset = 0, batchMode = false, openId = null, authRequired = false;
+
+function storedKey() { try { return localStorage.getItem("apiKey") || ""; } catch { return ""; } }
+function saveKey(v) { try { localStorage.setItem("apiKey", v); } catch {} }
+$("apikey").value = storedKey();
+$("apikey").addEventListener("change", (e) => { saveKey(e.target.value); refresh(); });
+
+async function api(path, opts = {}) {
+  const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+  const key = $("apikey").value;
+  if (key) headers["X-API-Key"] = key;
+  const res = await fetch(path, { ...opts, headers });
+  if (res.status === 204) return null;
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 401) { $("keybox").style.display = "block"; }
+    const d = body.detail;
+    throw new Error(Array.isArray(d) ? d.map((x) => x.msg).join("; ") : d || res.statusText);
+  }
+  return body;
+}
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ago = (iso) => {
+  const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return `${Math.floor(s)}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return new Date(iso).toLocaleDateString();
+};
+
+function setMode(batch) {
+  batchMode = batch;
+  $("tab-single").classList.toggle("on", !batch);
+  $("tab-batch").classList.toggle("on", batch);
+  $("instant-btn").style.display = batch ? "none" : "";
+  $("queue-btn").textContent = batch ? "Queue all" : "Queue job";
+  $("text").placeholder = batch ? "One ticket per line…" : "Paste a support ticket, email or message…";
+  $("mode-hint").textContent = batch
+    ? "Each non-empty line becomes its own job."
+    : "Queue runs in the background and keeps a history. Instant waits for the answer.";
+}
+$("tab-single").onclick = () => setMode(false);
+$("tab-batch").onclick = () => setMode(true);
+
+function showResult(r) {
+  $("result-kv").innerHTML = `
+    <dt>Category</dt><dd>${esc(r.category)}</dd>
+    <dt>Urgency</dt><dd><span class="pill u-${esc(r.urgency)}">${esc(r.urgency)}</span></dd>
+    <dt>Sentiment</dt><dd>${esc(r.sentiment)}</dd>
+    <dt>Summary</dt><dd>${esc(r.summary)}</dd>
+    <dt>Next step</dt><dd>${esc(r.action_item)}</dd>`;
+  $("result").classList.add("show");
+}
+
+async function busy(btn, fn) {
+  $("form-err").textContent = "";
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Working…";
+  try { await fn(); } catch (e) { $("form-err").textContent = e.message; }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = $("text").value.trim();
+  if (!text) return;
+  busy($("queue-btn"), async () => {
+    if (batchMode) {
+      const items = text.split("\n").map((t) => t.trim()).filter(Boolean).map((t) => ({ text: t }));
+      await api("/jobs/batch", { method: "POST", body: JSON.stringify({ items }) });
+    } else {
+      const job = await api("/jobs", { method: "POST", body: JSON.stringify({ text }) });
+      openId = job.id;
+    }
+    $("text").value = ""; offset = 0;
+    $("result").classList.remove("show");
+    await refresh();
+  });
+});
+
+$("instant-btn").addEventListener("click", () => {
+  const text = $("text").value.trim();
+  if (!text) return;
+  busy($("instant-btn"), async () => {
+    showResult(await api("/analyze", { method: "POST", body: JSON.stringify({ text }) }));
+  });
+});
+
+function row(j) {
+  const r = j.result || {};
+  const open = openId === j.id;
+  let html = `<tr class="main" data-id="${j.id}">
+    <td class="text" title="${esc(j.text)}">${esc(j.text)}</td>
+    <td>${esc(r.category || "—")}</td>
+    <td>${r.urgency ? `<span class="pill u-${esc(r.urgency)}">${esc(r.urgency)}</span>` : "—"}</td>
+    <td><span class="pill s-${j.status}">${j.status}</span></td>
+    <td class="time hide-sm">${ago(j.created_at)}</td></tr>`;
+  if (open) {
+    html += `<tr class="detail"><td colspan="5">
+      <dl class="kv">
+        <dt>Ticket</dt><dd>${esc(j.text)}</dd>
+        ${j.result ? `<dt>Summary</dt><dd>${esc(r.summary)}</dd>
+          <dt>Next step</dt><dd>${esc(r.action_item)}</dd>
+          <dt>Sentiment</dt><dd>${esc(r.sentiment)}</dd>` : ""}
+        ${j.error ? `<dt>Error</dt><dd class="err" style="margin:0">${esc(j.error)}</dd>` : ""}
+        <dt>Attempts</dt><dd>${j.attempts}${j.duration_ms != null ? ` · ${j.duration_ms} ms` : ""}</dd>
+        ${Object.keys(j.metadata || {}).length ? `<dt>Metadata</dt><dd><pre>${esc(JSON.stringify(j.metadata, null, 2))}</pre></dd>` : ""}
+        <dt>Job ID</dt><dd><code>${j.id}</code></dd>
+      </dl>
+      <div class="row">
+        ${["completed", "failed"].includes(j.status) ? `<button type="button" data-act="retry" data-id="${j.id}">Re-run</button>` : ""}
+        <button type="button" data-act="delete" data-id="${j.id}">Delete</button>
+      </div></td></tr>`;
+  }
+  return html;
+}
+
+$("rows").addEventListener("click", async (e) => {
+  const act = e.target.closest("button[data-act]");
+  if (act) {
+    e.stopPropagation();
+    try {
+      if (act.dataset.act === "retry") await api(`/jobs/${act.dataset.id}/retry`, { method: "POST" });
+      if (act.dataset.act === "delete") { await api(`/jobs/${act.dataset.id}`, { method: "DELETE" }); openId = null; }
+    } catch (err) { alert(err.message); }
+    return refresh();
+  }
+  const tr = e.target.closest("tr.main");
+  if (tr) { openId = openId === tr.dataset.id ? null : tr.dataset.id; refresh(); }
+});
+
+async function refresh() {
+  const q = new URLSearchParams({ limit: PAGE, offset });
+  for (const [k, id] of [["status", "f-status"], ["category", "f-category"], ["urgency", "f-urgency"]])
+    if ($(id).value) q.set(k, $(id).value);
+  try {
+    const [list, stats] = await Promise.all([api(`/jobs?${q}`), api("/stats")]);
+    $("rows").innerHTML = list.items.length ? list.items.map(row).join("")
+      : `<tr><td colspan="5" class="empty">No jobs yet. Queue a ticket to get started.</td></tr>`;
+    const end = Math.min(offset + PAGE, list.total);
+    $("page-info").textContent = list.total ? `${offset + 1}–${end} of ${list.total}` : "";
+    $("prev").disabled = offset === 0;
+    $("next").disabled = end >= list.total;
+    $("st-total").textContent = stats.total;
+    $("st-queue").textContent = stats.queue_depth;
+    $("st-failed").textContent = stats.by_status.failed || 0;
+    $("st-avg").textContent = stats.avg_duration_ms == null ? "–"
+      : stats.avg_duration_ms >= 1000 ? `${(stats.avg_duration_ms / 1000).toFixed(1)}s` : `${Math.round(stats.avg_duration_ms)}ms`;
+  } catch (e) {
+    $("rows").innerHTML = `<tr><td colspan="5" class="empty">${esc(e.message)}</td></tr>`;
+  }
+}
+
+$("prev").onclick = () => { offset = Math.max(0, offset - PAGE); refresh(); };
+$("next").onclick = () => { offset += PAGE; refresh(); };
+for (const id of ["f-status", "f-category", "f-urgency"]) $(id).onchange = () => { offset = 0; refresh(); };
+
+async function checkHealth() {
+  try {
+    const v = await (await fetch("/health")).json();
+    $("version").textContent = `v${v.version}`;
+    const res = await fetch("/health/ready");
+    const r = await res.json();
+    authRequired = r.auth_required;
+    if (authRequired) $("keybox").style.display = "block";
+    const llm = r.llm;
+    $("dot").className = "dot " + (llm.ok ? "ok" : "bad");
+    $("health").textContent = llm.ok
+      ? (llm.provider === "mock" ? "Mock analyzer (no model)" : `Model: ${llm.model === "auto" ? (llm.available_models || [])[0] || "auto" : llm.model}`)
+      : "Model server unreachable";
+    $("health").title = llm.ok ? (llm.base_url || "") : (llm.error || "");
+  } catch {
+    $("dot").className = "dot bad"; $("health").textContent = "API unreachable";
+  }
+}
+
+checkHealth(); refresh();
+setInterval(refresh, 2000);
+setInterval(checkHealth, 15000);
+</script>
+</body>
+</html>
