@@ -249,7 +249,7 @@ class MockAnalyzer:
         (Category.sales, r"demo|quote|pricing for|enterprise|purchase|buy|licen[cs]e"),
         (Category.feedback, r"love|great|suggest|feature request|would be nice|feedback|hate"),
     ]
-    _URGENT = r"outage|down for everyone|data loss|security|breach|hacked|production is down|asap|immediately|lawsuit"
+    _URGENT = r"outage|(is|are|been|went|goes) down|down for|data loss|security|breach|hacked|asap|immediately|lawsuit|every (api )?(call|request)|all (of our )?(users|customers)|returns? 5\d\d|\b50[0-4]\b"
     _HIGH = r"can't|cannot|unable|blocked|not working|broken|crash|locked out|charged twice|urgent"
     _MEDIUM = r"slow|error|wrong|incorrect|double charge|overcharg|today|deadline|soon"
     _NEG = r"angry|frustrat|terrible|awful|hate|unacceptable|disappoint|annoy|worst|ridiculous"

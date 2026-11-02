@@ -7,6 +7,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+**Live demo:** https://valentinakiyungi.github.io/async-agent-pipeline/
+
 An asynchronous ticket-triage service. Send it free-text support messages; it uses an LLM to return a
 validated, structured record — **category, urgency, sentiment, summary and next action** — either
 instantly or through a persistent background job queue with retries and webhooks. Works with local
@@ -16,7 +18,8 @@ models (LM Studio, Ollama, vLLM, llama.cpp) or any OpenAI-compatible API, and sh
 
 ## ✨ Features
 
-* **Web dashboard** at `/` — submit single tickets or batches, watch jobs move through the queue, filter by status/category/urgency, inspect, re-run and delete jobs.
+* **Triage board** at `/` — tickets land in *Urgent / High / Medium / Low* lanes as they are triaged. Paste one ticket or many, try example tickets, search, filter by category, open any ticket for its summary and next step, re-run, delete, copy as JSON and export to CSV. Light and dark themes; works on phones.
+* **Runs on GitHub Pages** — the dashboard is a single static file. On Pages it starts in demo mode (triage runs in the browser) and can connect to your own Triaxa server for real LLM results.
 * **Two ways to analyze**
   * `POST /analyze` — synchronous, returns the result directly.
   * `POST /jobs` / `POST /jobs/batch` — queued, persisted in SQLite, processed by concurrent async workers.
@@ -85,7 +88,7 @@ python test_client.py health
 | `POST /analyze` | Analyze one text synchronously |
 | `POST /jobs` | Queue one text → `202` with the job |
 | `POST /jobs/batch` | Queue many texts |
-| `GET /jobs` | List jobs; filter with `status`, `category`, `urgency`; paginate with `limit`, `offset` |
+| `GET /jobs` | List jobs; filter with `status`, `category`, `urgency`; search with `q`; paginate with `limit`, `offset` |
 | `GET /jobs/{id}` | Get one job and its result |
 | `POST /jobs/{id}/retry` | Re-run a completed or failed job |
 | `DELETE /jobs/{id}` | Delete a job |
@@ -156,6 +159,27 @@ All settings are environment variables (or lines in `.env`). See [`.env.example`
 
 ---
 
+## 🌐 GitHub Pages
+
+The dashboard in `app/static/` is published by `.github/workflows/pages.yml` whenever it changes on `main`.
+
+**One-time setup:** on GitHub open **Settings → Pages**, and under *Build and deployment → Source* choose
+**GitHub Actions**. The next push (or *Actions → Deploy dashboard to GitHub Pages → Run workflow*) publishes
+it at `https://valentinakiyungi.github.io/async-agent-pipeline/`.
+
+GitHub Pages only serves static files, so it can't run the Python server or a model. The hosted page has two modes,
+switched from the status pill in the top bar:
+
+* **Demo in this browser** (default on Pages) — a keyword classifier written in JavaScript; tickets are stored in the visitor's browser.
+* **Triaxa server** — enter the address of a running server (for example `http://127.0.0.1:8000` on your own machine,
+  or a hosted URL) to triage with a real model. CORS and Private Network Access are enabled for this.
+  Chrome, Edge and Firefox allow an HTTPS page to call `http://127.0.0.1`; Safari doesn't, so use one of those
+  or host the server behind HTTPS. Set `API_KEY` on any server reachable from the internet.
+
+When the dashboard is served by the Triaxa server itself (`uvicorn main:app`), it connects to that server automatically.
+
+---
+
 ## 🐳 Docker
 
 ```bash
@@ -190,7 +214,7 @@ app/
   store.py       SQLite job persistence
   schemas.py     Pydantic models for API and LLM output
   config.py      environment-based settings
-  static/        web dashboard
+  static/        dashboard (also deployed to GitHub Pages)
 main.py          entry point (`uvicorn main:app`)
 test_client.py   command-line client
 tests/           pytest suite

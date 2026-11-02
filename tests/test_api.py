@@ -170,3 +170,28 @@ def test_interrupted_jobs_resume_on_startup(tmp_path):
 def test_retry_conflict_and_missing(client):
     assert client.post("/jobs/nope/retry").status_code == 404
     assert client.get("/jobs/nope").status_code == 404
+
+
+def test_search(client):
+    texts = ["Refund my 50% discount please", "The app crashes on start", "crash_report attached"]
+    ids = [j["id"] for j in client.post("/jobs/batch", json={"items": [{"text": t} for t in texts]}).json()]
+    for i in ids:
+        wait_for(client, i)
+    hits = lambda q: {j["text"] for j in client.get("/jobs", params={"q": q}).json()["items"]}  # noqa: E731
+    assert hits("CRASH") == {texts[1], texts[2]}
+    assert hits("50%") == {texts[0]}          # % is literal, not a wildcard
+    assert hits("crash_") == {texts[2]}       # _ is literal too
+    assert hits("nothing like this") == set()
+    assert client.get("/jobs", params={"q": "crash", "category": "Technical"}).json()["total"] == 2
+
+
+def test_cors_preflight_allows_private_network(client):
+    r = client.options("/jobs", headers={
+        "Origin": "https://valentinakiyungi.github.io",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,x-api-key",
+        "Access-Control-Request-Private-Network": "true",
+    })
+    assert r.status_code == 200
+    assert r.headers["access-control-allow-private-network"] == "true"
+    assert r.headers["access-control-allow-origin"] in ("*", "https://valentinakiyungi.github.io")

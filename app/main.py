@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -53,12 +54,27 @@ def create_app(settings: Optional[Settings] = None, analyzer: Optional[Analyzer]
         lifespan=lifespan,
     )
     app.state.settings = settings
+    # The GitHub Pages dashboard is a public HTTPS site; browsers that enforce
+    # Private Network Access only let it call a server on localhost / your LAN
+    # if the server opts in. Newer Starlette has a flag for it; older versions
+    # get the header from the small middleware below.
+    cors_kwargs = {}
+    if "allow_private_network" in inspect.signature(CORSMiddleware.__init__).parameters:
+        cors_kwargs["allow_private_network"] = True
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
         allow_methods=["*"],
         allow_headers=["*"],
+        **cors_kwargs,
     )
+
+    @app.middleware("http")
+    async def allow_private_network(request: Request, call_next):
+        response = await call_next(request)
+        if request.headers.get("access-control-request-private-network") == "true":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        return response
 
     api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
@@ -138,6 +154,7 @@ def create_app(settings: Optional[Settings] = None, analyzer: Optional[Analyzer]
         status_: Optional[JobStatus] = Query(None, alias="status"),
         category: Optional[Category] = None,
         urgency: Optional[Urgency] = None,
+        q: Optional[str] = Query(None, max_length=200, description="Search ticket text and summaries"),
         limit: int = Query(50, ge=1, le=500),
         offset: int = Query(0, ge=0),
         s: JobStore = Depends(store),
@@ -146,7 +163,7 @@ def create_app(settings: Optional[Settings] = None, analyzer: Optional[Analyzer]
             status_.value if status_ else None,
             category.value if category else None,
             urgency.value if urgency else None,
-            limit, offset,
+            limit, offset, q.strip() if q and q.strip() else None,
         )
         return JobList(items=items, total=total, limit=limit, offset=offset)
 

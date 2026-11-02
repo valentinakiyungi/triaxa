@@ -198,3 +198,12 @@ def test_webhook_called_on_completion(tmp_path):
     job_id = run(scenario())
     assert len(received) == 1
     assert received[0]["id"] == job_id and received[0]["status"] == "completed"
+
+
+@pytest.mark.parametrize("text", [
+    "Our production dashboard has been down for 20 minutes and every API call returns 500.",
+    "The checkout page is down!",
+    "All of our customers see a 502 error",
+])
+def test_mock_flags_outages_as_urgent(text):
+    assert run(MockAnalyzer().analyze(text)).urgency.value == "Urgent"

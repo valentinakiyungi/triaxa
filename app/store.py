@@ -150,12 +150,18 @@ class JobStore:
         return self._row_to_job(rows[0]) if rows else None
 
     async def list(self, status: Optional[str] = None, category: Optional[str] = None,
-                   urgency: Optional[str] = None, limit: int = 50, offset: int = 0) -> Tuple[List[Job], int]:
+                   urgency: Optional[str] = None, limit: int = 50, offset: int = 0,
+                   q: Optional[str] = None) -> Tuple[List[Job], int]:
         where, params = [], []
         for col, val in (("status", status), ("category", category), ("urgency", urgency)):
             if val:
                 where.append(f"{col}=?")
                 params.append(val)
+        if q:
+            # Case-insensitive substring match on the ticket text and the generated summary.
+            like = "%" + q.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            where.append("(LOWER(text) LIKE ? ESCAPE '\\' OR LOWER(COALESCE(json_extract(result, '$.summary'), '')) LIKE ? ESCAPE '\\')")
+            params += [like, like]
         clause = f"WHERE {' AND '.join(where)}" if where else ""
         total = (await self._run(f"SELECT COUNT(*) AS n FROM jobs {clause}", tuple(params)))[0]["n"]
         rows = await self._run(
